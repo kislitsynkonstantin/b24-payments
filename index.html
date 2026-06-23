@@ -9,16 +9,18 @@
 <style>
   :root{
     --bg:#eef2f7;--card:#fff;--border:#e3e8ef;--text:#1b2733;--muted:#8a97a6;
-    --blue:#3d6bff;--blue-track:#e8eeff;--green:#3bb86f;
+    --blue:#3d6bff;--blue-track:#e8eeff;--green:#3bb86f;--red:#e0556b;
     font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-size:14px;padding:16px}
   .wrap{max-width:760px;margin:0 auto}
-  h1{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 14px}
+  h1{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 14px;display:flex;align-items:center;gap:7px}
+  h1 svg{width:15px;height:15px}
   .totbar{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
   .totbar .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .totbar .paid{font-size:19px;font-weight:800;color:var(--blue)}
+  .totbar .paid{font-size:19px;font-weight:800;color:var(--blue);display:flex;align-items:center;gap:7px}
+  .totbar .paid svg{width:17px;height:17px}
   .totbar .paid.done{color:var(--green)}
   .totbar .of{font-size:13px;color:var(--muted)}
   .bar{height:9px;background:var(--blue-track);border-radius:6px;overflow:hidden}
@@ -33,21 +35,24 @@
   .it{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px}
   .it:hover{background:#fafbfc}
   .ck{flex:0 0 auto;width:20px;height:20px;border:2px solid #cfd8e3;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff}
+  .ck svg{width:11px;height:11px;display:none}
   .it.done .ck{background:var(--green);border-color:var(--green)}
+  .it.done .ck svg{display:block}
   .it .amt{font-weight:700;white-space:nowrap}
   .it.done .desc,.it.done .amt{color:var(--muted);text-decoration:line-through}
   .it .desc{flex:1;min-width:0;color:var(--text)}
-  .it.done .desc{text-decoration:line-through}
-  .del{flex:0 0 auto;color:#c0c8d2;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:5px}
-  .del:hover{color:#e0556b;background:#fff0f2}
+  .del{flex:0 0 auto;color:#c0c8d2;cursor:pointer;display:flex;align-items:center;padding:3px;border-radius:5px}
+  .del svg{width:14px;height:14px}
+  .del:hover{color:var(--red);background:#fff0f2}
   .addrow{padding:8px 12px;border-top:1px solid #f0f3f7;display:flex;gap:8px}
   .addrow input{flex:1;border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px}
   .addrow input.amt-in{flex:0 0 120px}
   button{font-family:inherit;cursor:pointer}
-  .btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600}
-  .btn.ghost{background:#eef2ff;color:var(--blue)}
-  .btn.sm{padding:6px 10px;font-size:12px}
-  .add-sec{width:100%;background:#eef2ff;color:var(--blue);border:1px dashed #c3d0ff;border-radius:10px;padding:11px;font-weight:600;font-size:13px}
+  .btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+  .btn svg{width:13px;height:13px}
+  .btn.sm{padding:7px 11px;font-size:12px}
+  .add-sec{width:100%;background:#eef2ff;color:var(--blue);border:1px dashed #c3d0ff;border-radius:10px;padding:11px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .add-sec svg{width:14px;height:14px}
   .state{text-align:center;color:var(--muted);padding:40px 10px;font-size:13px}
   .err{background:#fff0f2;border:1px solid #f3c6cd;color:#c0344b;border-radius:9px;padding:10px 12px;font-size:12.5px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
   .ver{text-align:center;color:#aeb8c4;font-size:11px;margin-top:14px}
@@ -55,17 +60,25 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Этапы оплат</h1>
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h4"/></svg>Этапы оплат</h1>
   <div id="err" class="err" style="display:none"></div>
   <div id="root"><div class="state">Загрузка…</div></div>
-  <div class="ver" id="ver">v0.1-mvp</div>
+  <div class="ver" id="ver">v0.3-mvp</div>
 </div>
 
 <script>
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.1-mvp";
+const VERSION = "v0.3-mvp";
 
-let ctx = { member_id:null, deal_id:null, user_id:null, user_name:null };
+// SVG icon set (no emoji anywhere)
+const ICON = {
+  check: '<svg viewBox="0 0 10 10"><path d="M1.5 5.3l2.2 2.2 4.8-5.2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+
+let ctx = { deal_id:null, user_id:null, user_name:null };
 let model = { checklist:null, sections:[], items:[] };
 
 const fmt = n => new Intl.NumberFormat("ru-RU").format(Number(n)||0) + " \u20bd";
@@ -74,7 +87,7 @@ const showErr = m => { const e=$("#err"); e.style.display="block"; e.textContent
 const clearErr = () => { $("#err").style.display="none"; };
 
 async function call(action, extra={}){
-  const body = Object.assign({ action, member_id:ctx.member_id, deal_id:ctx.deal_id,
+  const body = Object.assign({ action, deal_id:ctx.deal_id,
     user_id:ctx.user_id, user_name:ctx.user_name }, extra);
   const r = await fetch(API, { method:"POST", headers:{"content-type":"application/json"},
     body: JSON.stringify(body) });
@@ -83,22 +96,33 @@ async function call(action, extra={}){
   return data;
 }
 
+// Timeline comment via BX24 (author = current user). Plain text only — no emoji.
+function postTimeline(text){
+  if(!window.BX24) return;
+  try{
+    BX24.callMethod("crm.timeline.comment.add", {
+      fields: { ENTITY_ID: Number(ctx.deal_id), ENTITY_TYPE: "deal", COMMENT: text }
+    }, function(){ });
+  }catch(_){}
+}
+
 function totals(){
   let paid=0,total=0;
   for(const it of model.items){ const a=Number(it.amount_raw)||0; total+=a; if(it.done) paid+=a; }
   return { paid,total, pct: total? Math.round(paid/total*100):0 };
 }
 
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
 function render(){
   const root = $("#root");
   const t = totals();
   const done = t.total>0 && t.paid>=t.total;
   let html = `<div class="totbar">
-    <div class="row"><span class="paid ${done?'done':''}">${done?'Оплачено полностью':fmt(t.paid)}</span>
+    <div class="row"><span class="paid ${done?'done':''}">${done?ICON.check.replace(/#fff/g,'currentColor')+' Оплачено полностью':ICON.wallet+' '+fmt(t.paid)}</span>
     <span class="of">${done?fmt(t.total):'из '+fmt(t.total)}</span></div>
     <div class="bar ${done?'done':''}"><i style="width:${t.pct}%"></i></div>
   </div>`;
-
   for(const s of model.sections){
     const its = model.items.filter(i=>i.section_id===s.id);
     let sp=0,stot=0; for(const i of its){const a=Number(i.amount_raw)||0;stot+=a;if(i.done)sp+=a;}
@@ -110,26 +134,24 @@ function render(){
       <div class="items">`;
     for(const it of its){
       html += `<div class="it ${it.done?'done':''}" data-item="${it.id}">
-        <div class="ck" data-toggle="${it.id}">${it.done?'<svg width="11" height="11" viewBox="0 0 10 10"><path d="M1.5 5.3l2.2 2.2 4.8-5.2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+        <div class="ck" data-toggle="${it.id}">${ICON.check}</div>
         <span class="amt">${fmt(it.amount_raw)}</span>
         <span class="desc">${esc(it.description||'')}</span>
-        <span class="del" data-del-item="${it.id}">&times;</span>
+        <span class="del" data-del-item="${it.id}" title="Удалить">${ICON.x}</span>
       </div>`;
     }
     html += `</div>
       <div class="addrow">
         <input class="amt-in" type="number" placeholder="Сумма" data-amt="${s.id}">
         <input placeholder="Описание этапа" data-desc="${s.id}">
-        <button class="btn sm" data-additem="${s.id}">+ Этап</button>
+        <button class="btn sm" data-additem="${s.id}">${ICON.plus} Этап</button>
       </div>
     </div>`;
   }
-  html += `<button class="add-sec" id="addSec">+ Добавить раздел</button>`;
+  html += `<button class="add-sec" id="addSec">${ICON.plus} Добавить раздел</button>`;
   root.innerHTML = html;
   bind();
 }
-
-function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 function bind(){
   const root=$("#root");
@@ -139,8 +161,14 @@ function bind(){
   };
   root.querySelectorAll("[data-toggle]").forEach(el=>el.onclick=async()=>{
     const id=+el.dataset.toggle; const it=model.items.find(i=>i.id===id); if(!it)return;
-    try{ await call("toggle_paid",{ item_id:id, done:!it.done, description:it.description, amount:it.amount_raw });
-      await reload(); }catch(e){ showErr(e.message); }
+    const newDone=!it.done;
+    try{
+      await call("toggle_paid",{ item_id:id, done:newDone, description:it.description, amount:it.amount_raw });
+      const sum = it.amount_raw ? " — "+fmt(it.amount_raw) : "";
+      const who = ctx.user_name ? " · "+ctx.user_name : "";
+      postTimeline((newDone?"Оплачено: ":"Отмена оплаты: ")+(it.description||"")+sum+who);
+      await reload();
+    }catch(e){ showErr(e.message); }
   });
   root.querySelectorAll("[data-additem]").forEach(el=>el.onclick=async()=>{
     const sid=+el.dataset.additem;
@@ -172,22 +200,21 @@ async function reload(){
 
 function boot(){
   $("#ver").textContent = VERSION + " · deal " + (ctx.deal_id||"—");
+  if(!ctx.deal_id){
+    showErr("Не удалось определить сделку. Откройте приложение во вкладке карточки сделки.");
+    $("#root").innerHTML = '<div class="state">Нет контекста сделки.</div>';
+    return;
+  }
   reload().catch(e=>{ showErr(e.message); $("#root").innerHTML=""; });
 }
 
-// ---- Bitrix context init ----
 if(window.BX24){
   BX24.init(function(){
     try{
-      const auth = BX24.getAuth() || {};
-      ctx.member_id = auth.member_id || null;
-      // deal id from placement
       let pl = {};
       try{ pl = BX24.placement.info() || {}; }catch(_){}
       ctx.deal_id = (pl.options && (pl.options.ID || pl.options.id)) || null;
-      // current user
       BX24.callMethod("user.current",{},function(res){
-        const u = res.data && res.data() ? res.data() : (res.answer&&res.answer.result);
         const d = (res.data&&res.data())||{};
         ctx.user_id = d.ID || null;
         ctx.user_name = [d.NAME,d.LAST_NAME].filter(Boolean).join(" ") || null;
@@ -196,7 +223,6 @@ if(window.BX24){
     }catch(e){ showErr("BX24 init: "+e.message); boot(); }
   });
 } else {
-  // Standalone preview (outside Bitrix) — show notice.
   showErr("Открыто вне Битрикса — нет контекста сделки. Это нормально для проверки вёрстки.");
   $("#root").innerHTML = '<div class="state">Откройте приложение во вкладке сделки Битрикс24.</div>';
 }
