@@ -63,12 +63,12 @@
   <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h4"/></svg>Этапы оплат</h1>
   <div id="err" class="err" style="display:none"></div>
   <div id="root"><div class="state">Загрузка…</div></div>
-  <div class="ver" id="ver">v0.3-mvp</div>
+  <div class="ver" id="ver">v0.4-mvp</div>
 </div>
 
 <script>
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.3-mvp";
+const VERSION = "v0.4-mvp";
 
 // SVG icon set (no emoji anywhere)
 const ICON = {
@@ -191,11 +191,21 @@ function bind(){
   });
 }
 
+function fit(){
+  if(!window.BX24) return;
+  try{
+    const h = Math.max(420, (document.querySelector(".wrap")?.offsetHeight||0) + 40);
+    if(BX24.resizeWindow){ BX24.resizeWindow(document.body.offsetWidth, h); }
+    else if(BX24.fitWindow){ BX24.fitWindow(); }
+  }catch(_){}
+}
+
 async function reload(){
   clearErr();
   const data = await call("load");
   model = data;
   render();
+  fit();
 }
 
 function boot(){
@@ -203,6 +213,7 @@ function boot(){
   if(!ctx.deal_id){
     showErr("Не удалось определить сделку. Откройте приложение во вкладке карточки сделки.");
     $("#root").innerHTML = '<div class="state">Нет контекста сделки.</div>';
+    fit();
     return;
   }
   reload().catch(e=>{ showErr(e.message); $("#root").innerHTML=""; });
