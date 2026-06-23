@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Установка — Этапы оплат</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="//api.bitrix24.com/api/v1/"></script>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#eef2f7;color:#1b2733;
+    display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+  .c{text-align:center;max-width:420px;padding:20px}
+  .c h1{font-size:17px;color:#3d6bff;margin:0 0 8px}
+  .c p{color:#5a6675;font-size:13px;line-height:1.5}
+  .c .st{margin-top:14px;font-size:12.5px;color:#8a97a6;white-space:pre-wrap}
+  .ok{color:#3bb86f;font-weight:700}
+  .err{color:#c0344b}
+</style>
+</head>
+<body>
+<div class="c">
+  <h1>Этапы оплат</h1>
+  <p>Установка приложения в Битрикс24…</p>
+  <div class="st" id="st">Инициализация…</div>
+</div>
+
+<script>
+const OAUTH = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/oauth";
+const HANDLER = "https://payments-b24.baniamsk.ru/";  // app page shown in the deal tab
+const st = document.getElementById("st");
+const log = (m,cls)=>{ st.innerHTML += "\n"+(cls?`<span class="${cls}">${m}</span>`:m); };
+
+function registerPlacement(cb){
+  // Tab inside the deal detail card — works for both funnels automatically.
+  BX24.callMethod("placement.bind", {
+    PLACEMENT: "CRM_DEAL_DETAIL_TAB",
+    HANDLER: HANDLER,
+    TITLE: "Этапы оплат"
+  }, function(res){
+    if(res.error()){
+      // If already bound, that's fine.
+      const e = res.error();
+      log("placement: "+ (e.ex ? e.ex.error_description||e.ex.error : e), "err");
+    } else {
+      log("Вкладка зарегистрирована ✓", "ok");
+    }
+    cb && cb();
+  });
+}
+
+function sendInstallToBackend(cb){
+  // Forward the install auth to our oauth function so it stores tokens.
+  const auth = BX24.getAuth() || {};
+  fetch(OAUTH, {
+    method:"POST", headers:{"content-type":"application/json"},
+    body: JSON.stringify({
+      AUTH_ID: auth.access_token, REFRESH_ID: auth.refresh_token,
+      member_id: auth.member_id, AUTH_EXPIRES: auth.expires_in || 3600,
+      DOMAIN: (location.ancestorOrigins && location.ancestorOrigins[0])
+        ? location.ancestorOrigins[0].replace(/^https?:\/\//,"") : (auth.domain||"")
+    })
+  }).then(r=>r.json()).then(d=>{
+    if(d && !d.error){ log("Авторизация сохранена ✓","ok"); }
+    else { log("oauth: "+(d&&d.error||"unknown"),"err"); }
+    cb && cb();
+  }).catch(e=>{ log("oauth fetch: "+e.message,"err"); cb&&cb(); });
+}
+
+if(window.BX24){
+  BX24.init(function(){
+    log("BX24 готов");
+    sendInstallToBackend(function(){
+      registerPlacement(function(){
+        log("Завершение установки…");
+        try{ BX24.installFinish(); }catch(e){ log("installFinish: "+e.message,"err"); }
+        log("Готово. Можно закрыть окно.","ok");
+      });
+    });
+  });
+} else {
+  log("Открыто вне Битрикса. Эта страница нужна для установки приложения.","err");
+}
+</script>
+</body>
+</html>
