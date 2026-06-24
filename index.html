@@ -4,257 +4,733 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Этапы оплат</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <script src="//api.bitrix24.com/api/v1/"></script>
 <style>
   :root{
-    --bg:#eef2f7;--card:#fff;--border:#e3e8ef;--text:#1b2733;--muted:#8a97a6;
-    --blue:#3d6bff;--blue-track:#e8eeff;--green:#3bb86f;--red:#e0556b;
-    font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --bg:#eef2f7; --card:#ffffff; --border:#e3e8ef; --text:#1b2733; --muted:#8a97a6;
+    --link:#2067b0; --purple:#3d6bff; --purple-lt:#c7d4ff; --purple-track:#e8eeff; --green:#3bb86f;
+    --lime:#3d6bff; --lime-dk:#2f59e6; --lime-text:#ffffff;
+    --radius:14px; --shadow:0 1px 2px rgba(20,40,70,.05),0 6px 20px rgba(20,40,70,.04);
+    font-family:-apple-system,"Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-size:14px;padding:16px}
-  .wrap{max-width:760px;margin:0 auto}
-  h1{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 14px;display:flex;align-items:center;gap:7px}
-  h1 svg{width:15px;height:15px}
-  .totbar{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
-  .totbar .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .totbar .paid{font-size:19px;font-weight:800;color:var(--blue);display:flex;align-items:center;gap:7px}
-  .totbar .paid svg{width:17px;height:17px}
-  .totbar .paid.done{color:var(--green)}
-  .totbar .of{font-size:13px;color:var(--muted)}
-  .bar{height:9px;background:var(--blue-track);border-radius:6px;overflow:hidden}
-  .bar>i{display:block;height:100%;background:var(--blue);transition:width .3s}
-  .bar.done>i{background:var(--green)}
-  .sec{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
-  .sec-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #f0f3f7}
-  .sec-h .nm{flex:1;font-weight:700;font-size:14px;border:none;background:transparent;color:var(--text);padding:2px 4px;border-radius:5px}
-  .sec-h .nm:focus{outline:1px solid var(--blue);background:#fafbff}
-  .sec-sub{font-size:12px;color:var(--muted);font-weight:500}
-  .items{padding:6px 8px}
-  .it{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px}
-  .it:hover{background:#fafbfc}
-  .ck{flex:0 0 auto;width:20px;height:20px;border:2px solid #cfd8e3;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff}
-  .ck svg{width:11px;height:11px;display:none}
-  .it.done .ck{background:var(--green);border-color:var(--green)}
-  .it.done .ck svg{display:block}
-  .it .amt{font-weight:700;white-space:nowrap}
-  .it.done .desc,.it.done .amt{color:var(--muted);text-decoration:line-through}
-  .it .desc{flex:1;min-width:0;color:var(--text)}
-  .del{flex:0 0 auto;color:#c0c8d2;cursor:pointer;display:flex;align-items:center;padding:3px;border-radius:5px}
-  .del svg{width:14px;height:14px}
-  .del:hover{color:var(--red);background:#fff0f2}
-  .addrow{padding:8px 12px;border-top:1px solid #f0f3f7;display:flex;gap:8px}
-  .addrow input{flex:1;border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px}
-  .addrow input.amt-in{flex:0 0 120px}
-  button{font-family:inherit;cursor:pointer}
-  .btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
-  .btn svg{width:13px;height:13px}
-  .btn.sm{padding:7px 11px;font-size:12px}
-  .add-sec{width:100%;background:#eef2ff;color:var(--blue);border:1px dashed #c3d0ff;border-radius:10px;padding:11px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
-  .add-sec svg{width:14px;height:14px}
-  .state{text-align:center;color:var(--muted);padding:40px 10px;font-size:13px}
-  .err{background:#fff0f2;border:1px solid #f3c6cd;color:#c0344b;border-radius:9px;padding:10px 12px;font-size:12.5px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
-  .ver{text-align:center;color:#aeb8c4;font-size:11px;margin-top:14px}
+  body{margin:0;background:var(--bg);color:var(--text);padding:20px;font-size:14px;-webkit-font-smoothing:antialiased}
+  .col{max-width:620px;margin:0 auto}
+  .hint{max-width:620px;margin:0 auto 12px;font-size:11.5px;color:var(--muted);text-align:center}
+
+  .ghost-sec{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px;opacity:.55}
+  .ghost-sec .sec-head{display:flex;justify-content:space-between;align-items:center}
+  .ghost-sec h4{margin:0;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .ghost-sec .edit{font-size:12px;color:var(--muted)}
+  .ghost-row{margin-top:10px;font-size:12px;color:var(--muted)}
+  .ghost-row a{color:var(--link);text-decoration:none}
+
+  /* main checklist section card */
+  .sec{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 18px 16px;margin-bottom:14px}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .sec-head h4{margin:0;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .sec-head .edit{font-size:12px;color:var(--link);cursor:pointer;user-select:none}
+  .sec-head .edit:hover{text-decoration:underline}
+  .sec-head-actions{display:flex;align-items:center;gap:14px}
+  .eye-all{display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);padding:2px;border-radius:6px}
+  .eye-all:hover{color:var(--purple);background:#eef2ff}
+
+  .title-row{display:flex;align-items:center;gap:8px;margin:12px 0 6px}
+  .dd{flex:0 0 auto;color:var(--purple)}
+  .cl-title{font-size:15px;font-weight:700;color:var(--text);cursor:text;border-radius:6px;padding:2px 4px;margin-left:-4px}
+  .cl-title:hover{background:#eef2ff}
+  .cl-title[contenteditable="true"]{background:#fff;outline:2px solid var(--purple-lt);cursor:text}
+
+  /* grand total */
+  .grand{margin:6px 0 4px;padding:10px 12px;background:#f3f9fc;border:1px solid #dcebf3;border-radius:10px;font-size:13px}
+  .grand b{color:var(--purple);font-weight:700}
+  .grand .g-rest{color:var(--muted)}
+  .grand .done-check{display:inline-flex;vertical-align:-3px;margin-left:4px}
+  .grand .g-frac{color:var(--muted);font-size:12px;margin-left:6px}
+
+  /* a payment section (group) */
+  .group{border:1px solid #eef2f6;border-radius:11px;margin-top:12px;overflow:hidden;background:#fff;transition:box-shadow .12s,opacity .12s}
+  .group.dragover-sec{outline:2px dashed var(--purple-lt);outline-offset:-2px}
+  .group.sec-dragging{opacity:.5}
+  .group.sec-drop-before{box-shadow:0 -3px 0 -1px var(--purple)}
+  .group.sec-drop-after{box-shadow:0 3px 0 -1px var(--purple)}
+  .sec-grip{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:14px;color:#c6d0db;cursor:grab;margin-left:-3px}
+  .sec-grip:hover{color:var(--purple)}
+  .sec-grip:active{cursor:grabbing}
+  .grp-head{display:flex;align-items:center;gap:9px;padding:10px 12px;background:#f7fafc;cursor:default}
+  .grp-caret{flex:0 0 auto;width:16px;height:16px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+  .group.collapsed .grp-caret{transform:rotate(-90deg)}
+  .grp-name{font-weight:700;font-size:14px;color:var(--text);cursor:text;border-radius:6px;padding:1px 5px;margin-left:-3px;flex:1;min-width:0}
+  .grp-name:hover{background:#eef2ff}
+  .grp-name[contenteditable="true"]{background:#fff;outline:2px solid var(--purple-lt)}
+  .grp-meta{flex:0 0 auto;font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .grp-actions{flex:0 0 auto;display:flex;gap:2px;align-items:center}
+  .grp-btn{cursor:pointer;color:#aeb9c6;padding:3px 4px;border-radius:5px;display:flex;align-items:center}
+  .grp-btn:hover{color:var(--purple);background:#eef2ff}
+  .grp-btn.del:hover{color:#e0708a;background:#fdf0f2}
+  .grp-sub{padding:7px 12px;font-size:12px;color:var(--text);background:#fcfdfe;border-top:1px solid #f2f4f8}
+  .grp-sub b{color:var(--purple);font-weight:700}
+  .grp-sub .s-rest{color:var(--muted)}
+  .grp-sub .done-check{display:inline-flex;vertical-align:-3px;margin-left:3px}
+  .group.collapsed .grp-body,.group.collapsed .grp-sub,.group.collapsed .grp-add{display:none}
+
+  /* items */
+  ul.items{list-style:none;margin:0;padding:0 12px}
+  li.item{display:flex;align-items:flex-start;gap:9px;padding:11px 2px;background:#fff;transition:background .12s,box-shadow .12s,opacity .12s}
+  li.item + li.item{border-top:1px solid #f2f4f8}
+  li.item.hidden{display:none}
+  li.item.dragging{opacity:.5;background:#eef2ff;border-radius:8px}
+  li.item.drop-before{box-shadow:inset 0 3px 0 -1px var(--purple)}
+  li.item.drop-after{box-shadow:inset 0 -3px 0 -1px var(--purple)}
+  li.item.confirming{background:#fdf0f2;border-radius:8px}
+  li.item.confirming .it-actions{opacity:1}
+  .handle{flex:0 0 auto;width:16px;display:flex;align-items:center;justify-content:center;margin-top:3px;color:#c6d0db;cursor:grab;opacity:0;transition:.12s}
+  li.item:hover .handle{opacity:1}
+  .handle:active,li.item.dragging .handle{cursor:grabbing}
+  .handle:hover{color:var(--purple)}
+  .handle.locked{cursor:not-allowed;opacity:.25}
+  .cb{flex:0 0 auto;width:22px;height:22px;border:2px solid #c6d0db;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:.15s;background:#fff}
+  .cb:hover{border-color:var(--purple)}
+  .cb.checked{background:var(--purple);border-color:var(--purple)}
+  .cb svg{opacity:0;transition:.15s}.cb.checked svg{opacity:1}
+  .it-body{flex:1;min-width:0}
+  .it-title{line-height:1.4;font-weight:500;border-radius:6px;padding:1px 4px;margin-left:-4px}
+  .it-title:hover{background:#eef2ff}
+  .it-amount{font-weight:700;color:var(--text)}
+  .it-desc{font-weight:500}
+  li.item.done .it-amount,li.item.done .it-desc{color:var(--muted);text-decoration:line-through}
+  .edit-fields{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .edit-fields input{border:1px solid var(--purple-lt);border-radius:7px;padding:6px 9px;font-size:13px;font-family:inherit}
+  .edit-fields input:focus{outline:none;border-color:var(--purple)}
+  .edit-fields .ed-amount{flex:0 0 120px;font-weight:700}
+  .edit-fields .ed-desc{flex:1;min-width:120px}
+  .it-sub{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:3px}
+  .link-chip{display:inline-flex;align-items:center;margin-top:4px;font-size:10.5px;font-weight:600;border-radius:6px;padding:1px 7px 1px 5px;border:1px solid}
+  .it-actions{flex:0 0 auto;display:flex;gap:2px;opacity:0;transition:.12s}
+  li.item:hover .it-actions{opacity:1}
+  .it-edit,.it-del,.it-split,.it-unlink{cursor:pointer;line-height:1;padding:3px 4px;border-radius:5px;color:#c6d0db;display:flex;align-items:center}
+  .it-edit:hover,.it-split:hover{color:var(--purple);background:#eef2ff}
+  .it-unlink:hover{color:#e0883b;background:#fdf3e8}
+  .it-del{font-size:16px}.it-del:hover{color:#e0708a;background:#fdf0f2}
+  .del-confirm{display:flex;align-items:center;gap:6px}
+  .dc-q{font-size:12px;color:#c24a6a;font-weight:600;white-space:nowrap}
+  .dc-yes,.dc-no{border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer}
+  .dc-yes{background:#e0708a;color:#fff}.dc-yes:hover{background:#d35878}
+  .dc-no{background:#eef2f7;color:var(--text)}.dc-no:hover{background:#e3e8ef}
+  li.item.linked{position:relative}
+  li.item.linked::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:3px;border-radius:2px;background:var(--lc,var(--purple-lt))}
+
+  /* per-section add row */
+  .grp-add{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #f2f4f8;background:#fcfdfe}
+  .grp-add input{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px}
+  .grp-add input.amount-in{flex:0 0 110px;font-weight:700}
+  .grp-add input.desc-in{flex:1;min-width:0}
+  .grp-add input:focus{outline:none;border-color:var(--purple-lt)}
+  .grp-add button{border:none;border-radius:8px;padding:8px 13px;font-weight:700;font-size:12px;cursor:pointer;background:var(--lime);color:var(--lime-text)}
+  .grp-add button:hover{background:var(--lime-dk)}
+
+  .addsec{margin-top:12px;display:flex;gap:8px}
+  .addsec input{flex:1;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13px}
+  .addsec input:focus{outline:none;border-color:var(--purple-lt)}
+  .addsec button{border:none;border-radius:9px;padding:9px 15px;font-weight:700;font-size:13px;cursor:pointer;background:var(--lime);color:var(--lime-text)}
+  .addsec button:hover{background:var(--lime-dk)}
+
+  .empty-note{color:var(--muted);font-size:13px;text-align:center;padding:18px 10px;line-height:1.5}
+
+  .toolbar{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid #f2f4f8;flex-wrap:wrap}
+  .toolbar label{font-size:11.5px;color:var(--muted)}
+  .toolbar select{border:1px solid var(--border);background:#f7fafc;border-radius:8px;padding:5px 24px 5px 9px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'><path d='M2 4l4 4 4-4' stroke='%238a97a6' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .badge{text-align:center;color:var(--muted);font-size:11px;margin-top:4px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h4"/></svg>Этапы оплат</h1>
-  <div id="err" class="err" style="display:none"></div>
-  <div id="root"><div class="state">Загрузка…</div></div>
-  <div class="ver" id="ver">v0.6-mvp</div>
+<div class="hint">Так секция «Этапы оплат» встаёт в левую колонку карточки — под «Клиент» / рядом со «ССЫЛКИ»</div>
+<div class="col">
+
+  <div class="ghost-sec">
+    <div class="sec-head"><h4>Ссылки</h4><span class="edit">изменить</span></div>
+    <div class="ghost-row">Чат по проекту · <a href="#">https://bania-msk.bitrix24.ru/online…</a></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">
+      <h4>Этапы оплат</h4>
+      <span class="sec-head-actions">
+        <span class="eye-all" id="hideAll" title="Скрыть/показать отмеченные во всех разделах"></span>
+        <span class="edit" id="collapseAll">Свернуть все</span>
+      </span>
+    </div>
+
+    <div class="grand" id="grand"></div>
+
+    <div id="groups"></div>
+
+    <div class="addsec">
+      <input id="newSecName" type="text" placeholder="Название нового раздела…">
+      <button id="addSecBtn">+ Добавить раздел</button>
+    </div>
+  </div>
+
+  <div class="badge" id="verBadge">v0.7</div>
 </div>
 
 <script>
+/* ====== Bitrix context + network layer (data lives in Supabase via `api`) ====== */
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.6-mvp";
+const VERSION = "v0.7";
+const ctx = { deal_id:null, user_id:null, user_name:null, checklist_id:null };
 
-// SVG icon set (no emoji anywhere)
-const ICON = {
-  check: '<svg viewBox="0 0 10 10"><path d="M1.5 5.3l2.2 2.2 4.8-5.2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
-  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-};
+/* state: same shape the prototype's render expects */
+let sections=[];
+let log={}, uid=0, linkSeq=0, linkColorIdx=0, confirmDelId=null;
+const $=s=>document.querySelector(s);
+const groupsEl=$("#groups");
 
-let ctx = { deal_id:null, user_id:null, user_name:null };
-let model = { checklist:null, sections:[], items:[] };
+const LINK_COLORS=[
+  ["#3d6bff","#e4eaff","#c4d2ff","#1a3fd0"],
+  ["#7a6ff0","#ece9fc","#dcd6f7","#5a4fd0"],
+  ["#3bb86f","#e4f6ec","#cfead9","#2a8f55"],
+  ["#e0883b","#fdf3e8","#f6e3cf","#b96a22"],
+  ["#e0708a","#fdebf0","#f6d6e0","#c24a6a"],
+  ["#15a0a0","#e0f5f5","#c9ecec","#0e7d7d"],
+];
 
-const fmt = n => new Intl.NumberFormat("ru-RU").format(Number(n)||0) + " \u20bd";
-const $ = (s,el=document)=>el.querySelector(s);
-const showErr = m => { const e=$("#err"); e.style.display="block"; e.textContent="Ошибка: "+m; };
-const clearErr = () => { $("#err").style.display="none"; };
+function user(){ return { login: ctx.user_name || "—" }; }
+function stamp(){
+  const d=new Date(), M=["янв.","февр.","мар.","апр.","мая","июня","июля","авг.","сент.","окт.","нояб.","дек."];
+  const p=n=>String(n).padStart(2,"0");
+  return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} г., ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
-async function call(action, extra={}){
-  const body = Object.assign({ action, deal_id:ctx.deal_id,
-    user_id:ctx.user_id, user_name:ctx.user_name }, extra);
-  const r = await fetch(API, { method:"POST", headers:{"content-type":"application/json"},
-    body: JSON.stringify(body) });
+/* ---- API call ---- */
+async function api(action, extra={}){
+  const body = Object.assign({ action, deal_id:ctx.deal_id, user_id:ctx.user_id, user_name:ctx.user_name }, extra);
+  const r = await fetch(API,{ method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body) });
   const data = await r.json();
-  if(!r.ok || data.error){ throw new Error(data.error || ("HTTP "+r.status)); }
+  if(!r.ok || data.error) throw new Error(data.error || ("HTTP "+r.status));
   return data;
 }
 
-// Timeline comment via BX24 (author = current user). Plain text only — no emoji.
-function postTimeline(text){
-  if(!window.BX24) return;
-  try{
-    BX24.callMethod("crm.timeline.comment.add", {
-      fields: { ENTITY_ID: Number(ctx.deal_id), ENTITY_TYPE: "deal", COMMENT: text }
-    }, function(){ });
-  }catch(_){}
-}
-
-function totals(){
-  let paid=0,total=0;
-  for(const it of model.items){ const a=Number(it.amount_raw)||0; total+=a; if(it.done) paid+=a; }
-  return { paid,total, pct: total? Math.round(paid/total*100):0 };
-}
-
-// Write summary into the deal so the left-column field and kanban tile update immediately.
-function pushFace(){
-  if(!window.BX24 || !ctx.deal_id) return;
-  const t = totals();
-  const rub = n => new Intl.NumberFormat("ru-RU").format(Number(n)||0) + "р";
-  const kanban = t.total>0 ? (rub(t.paid)+" / "+rub(t.total)) : "";
-  try{
-    BX24.callMethod("crm.deal.update", {
-      id: Number(ctx.deal_id),
-      fields: {
-        UF_CRM_PAY_SUMMARY: t.paid + "|" + t.total,
-        UF_CRM_PAY_KANBAN: kanban
-      }
-    }, function(){});
-  }catch(_){}
-}
-
-function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-
-function render(){
-  const root = $("#root");
-  const t = totals();
-  const done = t.total>0 && t.paid>=t.total;
-  let html = `<div class="totbar">
-    <div class="row"><span class="paid ${done?'done':''}">${done?ICON.check.replace(/#fff/g,'currentColor')+' Оплачено полностью':ICON.wallet+' '+fmt(t.paid)}</span>
-    <span class="of">${done?fmt(t.total):'из '+fmt(t.total)}</span></div>
-    <div class="bar ${done?'done':''}"><i style="width:${t.pct}%"></i></div>
-  </div>`;
-  for(const s of model.sections){
-    const its = model.items.filter(i=>i.section_id===s.id);
-    let sp=0,stot=0; for(const i of its){const a=Number(i.amount_raw)||0;stot+=a;if(i.done)sp+=a;}
-    html += `<div class="sec" data-sec="${s.id}">
-      <div class="sec-h">
-        <input class="nm" value="${esc(s.name)}" data-rename="${s.id}" data-old="${esc(s.name)}">
-        <span class="sec-sub">${fmt(sp)} / ${fmt(stot)}</span>
-      </div>
-      <div class="items">`;
-    for(const it of its){
-      html += `<div class="it ${it.done?'done':''}" data-item="${it.id}">
-        <div class="ck" data-toggle="${it.id}">${ICON.check}</div>
-        <span class="amt">${fmt(it.amount_raw)}</span>
-        <span class="desc">${esc(it.description||'')}</span>
-        <span class="del" data-del-item="${it.id}" title="Удалить">${ICON.x}</span>
-      </div>`;
+/* ---- map server rows -> prototype state shape ---- */
+function buildState(d){
+  ctx.checklist_id = d.checklist ? d.checklist.id : null;
+  const byId={};
+  sections = (d.sections||[]).map(s=>{
+    const sec = { id:s.id, name:s.name, collapsed:!!s.collapsed, hideChecked:!!s.hide_checked, items:[] };
+    byId[s.id]=sec; return sec;
+  });
+  log={};
+  for(const it of (d.items||[])){
+    const sec = byId[it.section_id]; if(!sec) continue;
+    const amt = fmtAmount((it.amount_plus?"+":"")+String(it.amount_raw??0));
+    const o = { id:it.id, amount:amt, desc:it.description||"", done:!!it.done };
+    if(it.link_group!=null){
+      o.linkId=it.link_group; o.linkRole=it.link_role; o.linkTarget=Number(it.link_target)||0;
+      o.linkPlus=!!it.amount_plus; o.linkColor=(it.link_color!=null?it.link_color:0);
     }
-    html += `</div>
-      <div class="addrow">
-        <input class="amt-in" type="number" placeholder="Сумма" data-amt="${s.id}">
-        <input placeholder="Описание этапа" data-desc="${s.id}">
-        <button class="btn sm" data-additem="${s.id}">${ICON.plus} Этап</button>
-      </div>
-    </div>`;
+    sec.items.push(o);
+    if(it.done && it.checked_by_name) log[it.id]={ login:it.checked_by_name, when: it.checked_at?fmtWhen(it.checked_at):"" };
   }
-  html += `<button class="add-sec" id="addSec">${ICON.plus} Добавить раздел</button>`;
-  root.innerHTML = html;
-  bind();
 }
+function fmtWhen(iso){ try{ const d=new Date(iso); const M=["янв.","февр.","мар.","апр.","мая","июня","июля","авг.","сент.","окт.","нояб.","дек."]; const p=n=>String(n).padStart(2,"0"); return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} г., ${p(d.getHours())}:${p(d.getMinutes())}`; }catch(_){ return ""; } }
 
-function bind(){
-  const root=$("#root");
-  $("#addSec").onclick = async ()=>{
-    try{ await call("add_section",{ checklist_id:model.checklist.id, name:"Новый раздел", position:model.sections.length });
-      await reload(); }catch(e){ showErr(e.message); }
-  };
-  root.querySelectorAll("[data-toggle]").forEach(el=>el.onclick=async()=>{
-    const id=+el.dataset.toggle; const it=model.items.find(i=>i.id===id); if(!it)return;
-    const newDone=!it.done;
-    try{
-      await call("toggle_paid",{ item_id:id, done:newDone, description:it.description, amount:it.amount_raw });
-      const sum = it.amount_raw ? " — "+fmt(it.amount_raw) : "";
-      const who = ctx.user_name ? " · "+ctx.user_name : "";
-      postTimeline((newDone?"Оплачено: ":"Отмена оплаты: ")+(it.description||"")+sum+who);
-      await reload();
-    }catch(e){ showErr(e.message); }
-  });
-  root.querySelectorAll("[data-additem]").forEach(el=>el.onclick=async()=>{
-    const sid=+el.dataset.additem;
-    const amt=root.querySelector(`[data-amt="${sid}"]`).value;
-    const desc=root.querySelector(`[data-desc="${sid}"]`).value;
-    if(!amt && !desc) return;
-    const its=model.items.filter(i=>i.section_id===sid);
-    try{ await call("add_item",{ section_id:sid, item:{ amount_raw:Math.abs(+amt)||0, description:desc, position:its.length } });
-      await reload(); }catch(e){ showErr(e.message); }
-  });
-  root.querySelectorAll("[data-del-item]").forEach(el=>el.onclick=async()=>{
-    const id=+el.dataset.delItem; const it=model.items.find(i=>i.id===id);
-    try{ await call("delete_item",{ item_id:id, description:it?.description }); await reload(); }
-    catch(e){ showErr(e.message); }
-  });
-  root.querySelectorAll("[data-rename]").forEach(el=>el.onchange=async()=>{
-    const id=+el.dataset.rename; const name=el.value.trim()||"Раздел";
-    try{ await call("rename_section",{ section_id:id, name, old_name:el.dataset.old }); el.dataset.old=name; }
-    catch(e){ showErr(e.message); }
-  });
-}
-
+/* ---- resize iframe to content ---- */
 function fit(){
   if(!window.BX24) return;
-  try{
-    const h = Math.max(420, (document.querySelector(".wrap")?.offsetHeight||0) + 40);
-    if(BX24.resizeWindow){ BX24.resizeWindow(document.body.offsetWidth, h); }
-    else if(BX24.fitWindow){ BX24.fitWindow(); }
+  try{ const h=Math.max(420,(document.querySelector(".col")?.offsetHeight||0)+40);
+    if(BX24.resizeWindow) BX24.resizeWindow(document.body.offsetWidth,h);
+    else if(BX24.fitWindow) BX24.fitWindow();
   }catch(_){}
 }
 
+/* ---- write summary to deal fields (left block + kanban) ---- */
+function pushFace(){
+  if(!window.BX24 || !ctx.deal_id) return;
+  let paid=0,total=0;
+  for(const s of sections) for(const i of s.items){ const a=amountNumber(i.amount); total+=a; if(i.done) paid+=a; }
+  const rub=n=>groupThousands(n)+"р";
+  const kan = total>0 ? (rub(paid)+" / "+rub(total)) : "";
+  try{ BX24.callMethod("crm.deal.update",{ id:Number(ctx.deal_id),
+    fields:{ UF_CRM_PAY_SUMMARY: paid+"|"+total, UF_CRM_PAY_KANBAN: kan } }, function(){}); }catch(_){}
+}
+
+/* ---- timeline comment (author = current user, plain text) ---- */
+function postTimeline(text){
+  if(!window.BX24) return;
+  try{ BX24.callMethod("crm.timeline.comment.add",{ fields:{ ENTITY_ID:Number(ctx.deal_id), ENTITY_TYPE:"deal", COMMENT:text } }, function(){}); }catch(_){}
+}
+
+/* ---- reload from server ---- */
 async function reload(){
-  clearErr();
-  const data = await call("load");
-  model = data;
+  const d = await api("load");
+  buildState(d);
   render();
   fit();
   pushFace();
 }
 
-function boot(){
-  $("#ver").textContent = VERSION + " · deal " + (ctx.deal_id||"—");
-  if(!ctx.deal_id){
-    showErr("Не удалось определить сделку. Откройте приложение во вкладке карточки сделки.");
-    $("#root").innerHTML = '<div class="state">Нет контекста сделки.</div>';
-    fit();
-    return;
-  }
-  reload().catch(e=>{ showErr(e.message); $("#root").innerHTML=""; });
+/* ---------- amount helpers ---------- */
+function amountNumber(s){ if(!s) return 0; const neg=/-|−/.test(s); const dg=(s.match(/\d/g)||[]).join(""); if(!dg) return 0; return (neg?-1:1)*parseInt(dg,10); }
+function groupThousands(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,"\u00A0"); }
+function fmtAmount(s){ if(!s) return ""; const hasPlus=/\+/.test(s); const n=amountNumber(s); if(n===0 && !/\d/.test(s)) return ""; const sign=n<0?"−":(hasPlus?"+":""); return `${sign}${groupThousands(Math.abs(n))}\u00A0₽`; }
+function liveFormatAmount(inp){
+  const raw=inp.value; if(!/\d/.test(raw)){ inp.value=""; return; }
+  const hasPlus=/\+/.test(raw); const neg=/-|−/.test(raw);
+  const dg=(raw.match(/\d/g)||[]).join(""); if(!dg){ inp.value=""; return; }
+  const n=parseInt(dg,10); const sign=neg?"−":(hasPlus?"+":"");
+  inp.value=`${sign}${groupThousands(n)}\u00A0₽`;
+}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ---------- lookups ---------- */
+function findItem(id){ for(const s of sections){ const it=s.items.find(i=>i.id===id); if(it) return {sec:s,it}; } return null; }
+function sectionOf(id){ return sections.find(s=>s.items.some(i=>i.id===id)); }
+
+/* ---------- section ops (persisted) ---------- */
+async function addSection(name){
+  try{
+    const pos = sections.length;
+    const r = await api("add_section",{ checklist_id:ctx.checklist_id, name:name||"Новый раздел", position:pos });
+    sections.push({ id:r.section.id, name:r.section.name, collapsed:false, hideChecked:false, items:[] });
+    render(); fit();
+  }catch(e){ alert("Ошибка: "+e.message); }
+}
+async function delSection(sid){
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  if(s.items.length && s._confirmDel!==true){ s._confirmDel=true; render(); return; }
+  try{
+    await api("delete_section",{ section_id:sid, name:s.name });
+    sections=sections.filter(x=>x.id!==sid); render(); fit(); pushFace();
+  }catch(e){ alert("Ошибка: "+e.message); }
+}
+function cancelDelSection(sid){ const s=sections.find(x=>x.id===sid); if(s){ delete s._confirmDel; render(); } }
+async function toggleCollapse(sid){
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  s.collapsed=!s.collapsed; render(); fit();
+  try{ await api("update_section",{ section_id:sid, patch:{ collapsed:s.collapsed } }); }catch(_){}
+}
+async function toggleHideChecked(sid){
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  s.hideChecked=!s.hideChecked; render(); fit();
+  try{ await api("update_section",{ section_id:sid, patch:{ hide_checked:s.hideChecked } }); }catch(_){}
 }
 
-if(window.BX24){
+/* ---------- item ops (persisted) ---------- */
+async function addItem(sid){
+  const a=document.getElementById("amt"+sid).value.trim();
+  const d=document.getElementById("desc"+sid).value.trim();
+  if(!a && !d) return;
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  const plus=/\+/.test(a); const raw=Math.abs(amountNumber(a));
+  try{
+    const r = await api("add_item",{ section_id:sid, item:{ amount_raw:raw, amount_plus:plus, description:d, position:s.items.length } });
+    s.items.push({ id:r.item.id, amount:fmtAmount((plus?"+":"")+String(raw)), desc:d, done:false });
+    render(); fit(); pushFace();
+    const amt=document.getElementById("amt"+sid); if(amt) amt.focus();
+  }catch(e){ alert("Ошибка: "+e.message); }
+}
+async function toggle(id){
+  const f=findItem(id); if(!f) return;
+  f.it.done=!f.it.done;
+  if(f.it.done) log[id]={login:user().login,when:stamp()}; else delete log[id];
+  render(); fit(); pushFace();
+  try{
+    await api("toggle_paid",{ item_id:id, done:f.it.done, description:f.it.desc, amount:amountNumber(f.it.amount) });
+    const sum=f.it.amount?(" — "+f.it.amount):""; const who=ctx.user_name?(" · "+ctx.user_name):"";
+    postTimeline((f.it.done?"Оплачено: ":"Отмена оплаты: ")+(f.it.desc||"")+sum+who);
+  }catch(e){ alert("Ошибка: "+e.message); reload(); }
+}
+function del(id){ confirmDelId=id; render(); }
+function cancelDel(){ confirmDelId=null; render(); }
+async function doDel(id){
+  const f=findItem(id); if(!f) return;
+  try{
+    if(f.it.linkId) await breakLinkServer(f.it.linkId);
+    await api("delete_item",{ item_id:id, description:f.it.desc });
+    if(f.it.linkId) breakLink(f.it.linkId);
+    f.sec.items=f.sec.items.filter(i=>i.id!==id);
+    delete log[id]; confirmDelId=null; render(); fit(); pushFace();
+  }catch(e){ alert("Ошибка: "+e.message); }
+}
+
+/* ---------- split / link (persisted; locked within a section) ---------- */
+async function splitPayment(id){
+  const f=findItem(id); if(!f) return;
+  const {sec,it}=f;
+  if(it.linkId) return;
+  const idx=sec.items.findIndex(i=>i.id===id);
+  const target=amountNumber(it.amount), hadPlus=/\+/.test(it.amount||"");
+  const lid=Date.now();                 // unique link group id
+  const col=(linkColorIdx++)%LINK_COLORS.length;
+  try{
+    // 1) create the secondary (remainder) row on the server
+    const r = await api("add_item",{ section_id:sec.id, item:{
+      amount_raw:0, amount_plus:hadPlus, description:it.desc, position:idx+1,
+      link_group:lid, link_role:"secondary", link_target:target, link_color:col
+    }});
+    // 2) mark the primary on the server
+    await api("update_item",{ item_id:id, patch:{ link_group:lid, link_role:"primary", link_target:target, link_color:col } });
+    // 3) reflect locally
+    it.linkId=lid; it.linkRole="primary"; it.linkTarget=target; it.linkPlus=hadPlus; it.linkColor=col;
+    sec.items.splice(idx+1,0,{ id:r.item.id, amount:fmtAmount((hadPlus?"+":"")+"0"), desc:it.desc, done:false,
+      linkId:lid, linkRole:"secondary", linkTarget:target, linkPlus:hadPlus, linkColor:col });
+    render(); fit(); pushFace();
+  }catch(e){ alert("Ошибка: "+e.message); }
+}
+function syncPair(lid){
+  let primary,secondary;
+  for(const s of sections) for(const i of s.items){
+    if(i.linkId===lid && i.linkRole==="primary") primary=i;
+    if(i.linkId===lid && i.linkRole==="secondary") secondary=i;
+  }
+  if(!primary||!secondary) return;
+  const rest=Math.max(0, primary.linkTarget-amountNumber(primary.amount));
+  secondary.amount=fmtAmount((primary.linkPlus?"+":"")+String(rest));
+  // persist new remainder amount
+  api("update_item",{ item_id:secondary.id, patch:{ amount_raw:rest } }).catch(()=>{});
+}
+function breakLink(lid){
+  for(const s of sections) for(const i of s.items){
+    if(i.linkId===lid){ delete i.linkId; delete i.linkRole; delete i.linkTarget; delete i.linkPlus; delete i.linkColor; }
+  }
+}
+async function breakLinkServer(lid){
+  const ids=[];
+  for(const s of sections) for(const i of s.items) if(i.linkId===lid) ids.push(i.id);
+  for(const iid of ids){ await api("update_item",{ item_id:iid, patch:{ link_group:null, link_role:null, link_target:null, link_color:null } }).catch(()=>{}); }
+}
+async function unlink(id){
+  const f=findItem(id);
+  if(f && f.it.linkId){ const lid=f.it.linkId; await breakLinkServer(lid); breakLink(lid); render(); fit(); }
+}
+const linkChipIcon=`<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><path d="M6.5 9.5l3-3"/><path d="M9 4.5l.7-.7a2.5 2.5 0 013.5 3.5l-.7.7"/><path d="M7 11.5l-.7.7a2.5 2.5 0 01-3.5-3.5l.7-.7"/></svg>`;
+
+/* ---------- inline edit ---------- */
+function startEdit(id){
+  const host=document.getElementById("t"+id); if(!host) return;
+  const f=findItem(id); if(!f) return; const it=f.it;
+  host.innerHTML=`<span class="edit-fields"><input class="ed-amount" type="text" value="${esc(it.amount||"")}" placeholder="Сумма, ₽"><input class="ed-desc" type="text" value="${esc(it.desc||"")}" placeholder="Описание этапа…"></span>`;
+  const aIn=host.querySelector(".ed-amount"), dIn=host.querySelector(".ed-desc");
+  aIn.addEventListener("input",()=>liveFormatAmount(aIn));
+  dIn.focus();
+  let done=false;
+  const finish=save=>{
+    if(done) return; done=true;
+    if(save){
+      const newAmount=fmtAmount(aIn.value.trim());
+      const changed=newAmount!==(it.amount||"");
+      it.amount=newAmount; it.desc=dIn.value.trim();
+      // persist
+      api("update_item",{ item_id:it.id, patch:{ amount_raw:Math.abs(amountNumber(it.amount)), amount_plus:/\+/.test(it.amount||""), description:it.desc } }).then(()=>pushFace()).catch(()=>{});
+      if(it.linkId){
+        if(it.linkRole==="primary"){ if(amountNumber(it.amount)>it.linkTarget){ it.linkTarget=amountNumber(it.amount); api("update_item",{item_id:it.id,patch:{link_target:it.linkTarget}}).catch(()=>{}); } syncPair(it.linkId); }
+        else if(it.linkRole==="secondary" && changed){ breakLinkServer(it.linkId).then(()=>{ breakLink(it.linkId); render(); }); return; }
+      }
+    }
+    render(); fit();
+  };
+  const onKey=e=>{ if(e.key==="Enter"){e.preventDefault();finish(true);} else if(e.key==="Escape"){e.preventDefault();finish(false);} };
+  aIn.addEventListener("keydown",onKey); dIn.addEventListener("keydown",onKey);
+  const onBlur=()=>setTimeout(()=>{ if(!done && document.activeElement!==aIn && document.activeElement!==dIn) finish(true); },0);
+  aIn.addEventListener("blur",onBlur); dIn.addEventListener("blur",onBlur);
+}
+
+/* ---------- sums ---------- */
+function sectionSums(s){
+  const paid=s.items.filter(i=>i.done).reduce((a,i)=>a+amountNumber(i.amount),0);
+  const all=s.items.reduce((a,i)=>a+amountNumber(i.amount),0);
+  const total=s.items.length, done=s.items.filter(i=>i.done).length;
+  return {paid,all,total,done};
+}
+const greenCheck=`<span class="done-check" title="Все этапы закрыты"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#3bb86f"/><path d="M4.5 8.2l2.2 2.2 4.8-5" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+
+/* ---------- render ---------- */
+function render(){
+  if(!sections.length){
+    groupsEl.innerHTML=`<div class="empty-note">Разделов пока нет.<br>Создайте первый раздел ниже — например «Задаток» или «Основные платежи».</div>`;
+    $("#grand").style.display="none";
+    updateCollapseAllBtn(); updateHideAllBtn();
+    return;
+  }
+
+  groupsEl.innerHTML=sections.map(s=>{
+    const {paid,all,total,done}=sectionSums(s);
+    const allDone=total>0 && done===total;
+    const itemsHtml=s.items.map(it=>renderItem(it,s)).join("") ||
+      `<li class="item" style="color:var(--muted);font-size:12.5px;justify-content:center;padding:14px">В разделе нет этапов</li>`;
+
+    const subInner = (all>0||paid>0)
+      ? `Оплачено: <b>${groupThousands(paid)}\u00A0₽</b> из ${groupThousands(all)}\u00A0₽ <span class="s-rest">· остаток ${groupThousands(all-paid)}\u00A0₽</span>${allDone?greenCheck:""}`
+      : (allDone?`Все этапы закрыты${greenCheck}`:`Нет сумм`);
+
+    const delConfirm = s._confirmDel===true;
+
+    return `<div class="group ${s.collapsed?'collapsed':''}" data-sid="${s.id}">
+      <div class="grp-head">
+        <span class="sec-grip" title="Перетащите, чтобы переставить раздел" draggable="true" data-sid="${s.id}">
+          <svg width="11" height="16" viewBox="0 0 11 16" fill="currentColor"><circle cx="3" cy="3" r="1.3"/><circle cx="8" cy="3" r="1.3"/><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="3" cy="13" r="1.3"/><circle cx="8" cy="13" r="1.3"/></svg>
+        </span>
+        <span class="grp-caret" onclick="toggleCollapse(${s.id})" title="Свернуть/развернуть">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l4 4 4-4"/></svg>
+        </span>
+        <span class="grp-name" id="gn${s.id}" ondblclick="startSecEdit(${s.id})">${esc(s.name)}</span>
+        <span class="grp-meta">${done}/${total}</span>
+        <span class="grp-actions">
+          ${delConfirm
+            ? `<span class="del-confirm"><span class="dc-q">Удалить раздел?</span><button class="dc-yes" onclick="delSection(${s.id})">Да</button><button class="dc-no" onclick="cancelDelSection(${s.id})">Нет</button></span>`
+            : `<span class="grp-btn" title="Скрыть/показать отмеченные" onclick="toggleHideChecked(${s.id})">
+                 ${s.hideChecked
+                   ? `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.7"/></svg>`
+                   : `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.7"/><path d="M2 2l12 12"/></svg>`}
+               </span>
+               <span class="grp-btn" title="Переименовать раздел" onclick="startSecEdit(${s.id})">
+                 <svg width="14" height="14" viewBox="0 0 16 16"><path d="M11.5 2.5l2 2-7.5 7.5-2.7.7.7-2.7 7.5-7.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+               </span>
+               <span class="grp-btn del" title="Удалить раздел" onclick="delSection(${s.id})">
+                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M3 4h10M6 4V2.5h4V4M5 4l.6 9h4.8L11 4"/></svg>
+               </span>`}
+        </span>
+      </div>
+      <ul class="items grp-body" data-sid="${s.id}">${itemsHtml}</ul>
+      <div class="grp-sub">${subInner}</div>
+      <div class="grp-add">
+        <input id="amt${s.id}" class="amount-in" type="text" placeholder="Сумма, ₽" oninput="liveFormatAmount(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('desc${s.id}').focus();}">
+        <input id="desc${s.id}" class="desc-in" type="text" placeholder="Описание этапа…" onkeydown="if(event.key==='Enter')addItem(${s.id})">
+        <button onclick="addItem(${s.id})">Добавить</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  renderGrand();
+  updateCollapseAllBtn();
+  updateHideAllBtn();
+  wireDnD();
+  wireSectionDnD();
+}
+
+function renderItem(it,s){
+  const hide = s.hideChecked && it.done ? " hidden":"";
+  const sub = it.done && log[it.id] ? `<div class="it-sub">Отметил(а) ${esc(log[it.id].login)}, ${log[it.id].when}</div>` : "";
+  const lc = it.linkId!=null && it.linkColor!=null ? LINK_COLORS[it.linkColor] : null;
+  const liStyle = lc ? ` style="--lc:${lc[0]}"` : "";
+  const chip = it.linkId
+    ? `<div class="link-chip" style="background:${lc[1]};border-color:${lc[2]};color:${lc[3]}" title="Связанные этапы — заперты в этом разделе, пока есть связь">${linkChipIcon}${it.linkRole==="primary"?"связанная оплата · основная":"связанная оплата · остаток"}</div>`
+    : "";
+  const locked = it.linkId ? " locked" : "";
+  const handleTitle = it.linkId ? "Связанные оплаты нельзя перетаскивать (разорвите связь)" : "Перетащите, чтобы изменить порядок";
+  const actions = confirmDelId===it.id
+    ? `<div class="del-confirm"><span class="dc-q">Удалить?</span><button class="dc-yes" onclick="doDel(${it.id})">Да</button><button class="dc-no" onclick="cancelDel()">Нет</button></div>`
+    : `${!it.linkId
+        ? `<div class="it-split" title="Разбить оплату на две части" onclick="splitPayment(${it.id})"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v5"/><path d="M8 7L4 11M8 7l4 4"/><circle cx="4" cy="13" r="1.4"/><circle cx="12" cy="13" r="1.4"/></svg></div>`
+        : `<div class="it-unlink" title="Разорвать связь этапов" onclick="unlink(${it.id})"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M6.5 9.5l3-3"/><path d="M9 4.5l.7-.7a2.5 2.5 0 013.5 3.5l-.7.7"/><path d="M7 11.5l-.7.7a2.5 2.5 0 01-3.5-3.5l.7-.7"/><path d="M2 2l12 12"/></svg></div>`}
+       <div class="it-edit" title="Переименовать" onclick="startEdit(${it.id})"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M11.5 2.5l2 2-7.5 7.5-2.7.7.7-2.7 7.5-7.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+       <div class="it-del" title="Удалить" onclick="del(${it.id})">×</div>`;
+
+  return `<li class="item${it.done?' done':''}${it.linkId?' linked':''}${confirmDelId===it.id?' confirming':''}${hide}" data-id="${it.id}" draggable="${it.linkId?'false':'true'}"${liStyle}>
+    <div class="handle${locked}" title="${handleTitle}">
+      <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="3" r="1.3"/><circle cx="7.5" cy="3" r="1.3"/><circle cx="2.5" cy="8" r="1.3"/><circle cx="7.5" cy="8" r="1.3"/><circle cx="2.5" cy="13" r="1.3"/><circle cx="7.5" cy="13" r="1.3"/></svg>
+    </div>
+    <div class="cb ${it.done?'checked':''}" onclick="toggle(${it.id})"><svg width="13" height="13" viewBox="0 0 13 13"><path d="M2 7l3 3 6-7" stroke="#fff" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="it-body"><div class="it-title" id="t${it.id}" ondblclick="startEdit(${it.id})">${it.amount?`<span class="it-amount">${esc(it.amount)}</span> `:""}<span class="it-desc">${esc(it.desc)}</span></div>${chip}${sub}</div>
+    <div class="it-actions">${actions}</div>
+  </li>`;
+}
+
+function renderGrand(){
+  let paid=0,all=0,total=0,done=0;
+  for(const s of sections){ const x=sectionSums(s); paid+=x.paid; all+=x.all; total+=x.total; done+=x.done; }
+  const g=$("#grand");
+  const allDone=total>0 && done===total;
+  if(total===0){ g.style.display="none"; return; }
+  g.style.display="";
+  if(all>0||paid>0){
+    g.innerHTML=`Итого по договору: <b>${groupThousands(paid)}\u00A0₽</b> из ${groupThousands(all)}\u00A0₽ <span class="g-rest">· остаток ${groupThousands(all-paid)}\u00A0₽</span><span class="g-frac">(${done}/${total})</span>${allDone?greenCheck:""}`;
+  } else {
+    g.innerHTML=`Этапов: ${done}/${total}${allDone?greenCheck:""}`;
+  }
+}
+
+/* ---------- section name editing ---------- */
+function startSecEdit(sid){
+  const el=document.getElementById("gn"+sid); if(!el) return;
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  el.setAttribute("contenteditable","true"); el.focus();
+  document.getSelection().selectAllChildren(el);
+  let done=false;
+  const finish=save=>{ if(done) return; done=true;
+    el.removeAttribute("contenteditable");
+    const v=el.textContent.trim(); if(save && v && v!==s.name){ const old=s.name; s.name=v; api("rename_section",{ section_id:sid, name:v, old_name:old }).catch(()=>{}); }
+    render();
+  };
+  el.onkeydown=e=>{ if(e.key==="Enter"){e.preventDefault();finish(true);} else if(e.key==="Escape"){e.preventDefault();finish(false);} };
+  el.onblur=()=>finish(true);
+}
+
+/* ---------- drag & drop (delegated at container level) ---------- */
+let dragId=null, dragSid=null;     // item drag
+let dragSecId=null;                // section drag
+let dndWired=false;
+
+function wireDnD(){
+  if(dndWired) return;             // bind once; survives re-renders via delegation
+  dndWired=true;
+
+  groupsEl.addEventListener("dragstart",e=>{
+    const grip=e.target.closest(".sec-grip");
+    if(grip){
+      dragSecId=Number(grip.dataset.sid);
+      const grp=grip.closest(".group"); if(grp) grp.classList.add("sec-dragging");
+      e.dataTransfer.effectAllowed="move";
+      try{ e.dataTransfer.setData("text/plain","sec:"+dragSecId); }catch(_){}
+      return;
+    }
+    const li=e.target.closest("li.item");
+    if(li && li.getAttribute("draggable")!=="false"){
+      const ul=li.closest("ul.items");
+      dragId=Number(li.dataset.id); dragSid=Number(ul.dataset.sid);
+      li.classList.add("dragging"); e.dataTransfer.effectAllowed="move";
+      try{ e.dataTransfer.setData("text/plain",String(dragId)); }catch(_){}
+    }
+  });
+
+  groupsEl.addEventListener("dragend",()=>{
+    groupsEl.querySelectorAll(".dragging,.sec-dragging").forEach(el=>el.classList.remove("dragging","sec-dragging"));
+    clearMarks(); clearSecMarks();
+    dragId=null; dragSid=null; dragSecId=null;
+  });
+
+  groupsEl.addEventListener("dragover",e=>{
+    // section drag in progress
+    if(dragSecId!=null){
+      const grp=e.target.closest(".group"); if(!grp) return;
+      const tid=Number(grp.dataset.sid); if(tid===dragSecId) return;
+      e.preventDefault(); e.dataTransfer.dropEffect="move";
+      const r=grp.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2;
+      clearSecMarks(); grp.classList.add(after?"sec-drop-after":"sec-drop-before");
+      return;
+    }
+    // item drag in progress
+    if(dragId!=null){
+      const ul=e.target.closest("ul.items"); if(!ul) return;
+      if(Number(ul.dataset.sid)!==dragSid) return; // locked to same section
+      e.preventDefault(); e.dataTransfer.dropEffect="move";
+      const li=e.target.closest("li.item"); if(!li||Number(li.dataset.id)===dragId) return;
+      const r=li.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2;
+      clearMarks(); li.classList.add(after?"drop-after":"drop-before");
+    }
+  });
+
+  groupsEl.addEventListener("drop",e=>{
+    if(dragSecId!=null){
+      const grp=e.target.closest(".group"); if(!grp) return;
+      const tid=Number(grp.dataset.sid); if(tid===dragSecId){ clearSecMarks(); return; }
+      e.preventDefault();
+      const r=grp.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2;
+      reorderSections(dragSecId,tid,after);
+      return;
+    }
+    if(dragId!=null){
+      const ul=e.target.closest("ul.items"); if(!ul) return;
+      if(Number(ul.dataset.sid)!==dragSid) return;
+      e.preventDefault();
+      const li=e.target.closest("li.item"); if(!li) return;
+      const targetId=Number(li.dataset.id); if(targetId===dragId){ clearMarks(); return; }
+      const r=li.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2;
+      reorder(dragSid,dragId,targetId,after);
+    }
+  });
+}
+function clearMarks(){ groupsEl.querySelectorAll(".drop-before,.drop-after").forEach(l=>l.classList.remove("drop-before","drop-after")); }
+function clearSecMarks(){ groupsEl.querySelectorAll(".sec-drop-before,.sec-drop-after").forEach(g=>g.classList.remove("sec-drop-before","sec-drop-after")); }
+function reorder(sid,fromId,targetId,after){
+  const s=sections.find(x=>x.id===sid); if(!s) return;
+  const from=s.items.findIndex(i=>i.id===fromId); if(from<0) return;
+  const [moved]=s.items.splice(from,1);
+  let t=s.items.findIndex(i=>i.id===targetId);
+  if(t<0){ s.items.splice(from,0,moved); return; }
+  s.items.splice(after?t+1:t,0,moved); render(); fit();
+  // persist positions for this section
+  const ups=s.items.map((i,idx)=>({ id:i.id, section_id:sid, position:idx }));
+  api("reorder",{ items:ups }).catch(()=>{});
+}
+function reorderSections(fromId,targetId,after){
+  const from=sections.findIndex(s=>s.id===fromId); if(from<0) return;
+  const [moved]=sections.splice(from,1);
+  let t=sections.findIndex(s=>s.id===targetId);
+  if(t<0){ sections.splice(from,0,moved); return; }
+  sections.splice(after?t+1:t,0,moved); render(); fit();
+  // persist section positions
+  const ups=sections.map((s,idx)=>({ id:s.id, position:idx }));
+  api("reorder_sections",{ sections:ups }).catch(()=>{});
+}
+function wireSectionDnD(){ /* merged into wireDnD via delegation */ }
+
+/* ---------- collapse all toggle ---------- */
+function updateCollapseAllBtn(){
+  const btn=$("#collapseAll");
+  if(!sections.length){ btn.style.display="none"; return; }
+  btn.style.display="";
+  const allCollapsed=sections.every(s=>s.collapsed);
+  btn.textContent=allCollapsed?"Развернуть все":"Свернуть все";
+}
+$("#collapseAll").addEventListener("click",()=>{
+  const allCollapsed=sections.length>0 && sections.every(s=>s.collapsed);
+  sections.forEach(s=>{ s.collapsed=!allCollapsed; });
+  render(); fit();
+  sections.forEach(s=>api("update_section",{ section_id:s.id, patch:{ collapsed:s.collapsed } }).catch(()=>{}));
+});
+
+/* ---------- global hide checked ---------- */
+function updateHideAllBtn(){
+  const btn=$("#hideAll");
+  if(!sections.length){ btn.style.display="none"; return; }
+  btn.style.display="";
+  const allHidden=sections.every(s=>s.hideChecked);
+  btn.title = allHidden ? "Показать отмеченные во всех разделах" : "Скрыть отмеченные во всех разделах";
+  btn.innerHTML = allHidden
+    ? `<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.7"/></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.7"/><path d="M2 2l12 12"/></svg>`;
+}
+$("#hideAll").addEventListener("click",()=>{
+  const allHidden=sections.length>0 && sections.every(s=>s.hideChecked);
+  sections.forEach(s=>{ s.hideChecked=!allHidden; });
+  render(); fit();
+  sections.forEach(s=>api("update_section",{ section_id:s.id, patch:{ hide_checked:s.hideChecked } }).catch(()=>{}));
+});
+
+/* ---------- add section ---------- */
+$("#addSecBtn").addEventListener("click",()=>{
+  const v=$("#newSecName").value.trim();
+  addSection(v||"Новый раздел");
+  $("#newSecName").value="";
+});
+$("#newSecName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#addSecBtn").click(); });
+
+/* ---------- boot: get deal + user from Bitrix, then load data ---------- */
+function boot(){
+  try{ $("#verBadge").textContent = VERSION; }catch(_){}
+  if(!window.BX24){
+    // standalone preview (outside Bitrix)
+    render();
+    return;
+  }
   BX24.init(function(){
     try{
-      let pl = {};
-      try{ pl = BX24.placement.info() || {}; }catch(_){}
-      ctx.deal_id = (pl.options && (pl.options.ID || pl.options.id)) || null;
+      let info={}; try{ info=BX24.placement.info()||{}; }catch(_){}
+      const o=info.options||{};
+      ctx.deal_id = o.ENTITY_VALUE_ID || o.ID || o.id || null;
       BX24.callMethod("user.current",{},function(res){
-        const d = (res.data&&res.data())||{};
-        ctx.user_id = d.ID || null;
-        ctx.user_name = [d.NAME,d.LAST_NAME].filter(Boolean).join(" ") || null;
-        boot();
+        try{ const u=res.data(); if(u){ ctx.user_id=u.ID; ctx.user_name=((u.NAME||"")+" "+(u.LAST_NAME||"")).trim()||u.LOGIN||("ID "+u.ID); } }catch(_){}
+        if(!ctx.deal_id){ $("#groups").innerHTML='<div class="empty-note">Нет контекста сделки.</div>'; $("#grand").style.display="none"; fit(); return; }
+        reload().catch(e=>{ $("#groups").innerHTML='<div class="empty-note">Ошибка загрузки: '+esc(e.message)+'</div>'; fit(); });
       });
-    }catch(e){ showErr("BX24 init: "+e.message); boot(); }
+    }catch(e){ $("#groups").innerHTML='<div class="empty-note">Ошибка: '+esc(e.message)+'</div>'; fit(); }
   });
-} else {
-  showErr("Открыто вне Битрикса — нет контекста сделки. Это нормально для проверки вёрстки.");
-  $("#root").innerHTML = '<div class="state">Откройте приложение во вкладке сделки Битрикс24.</div>';
 }
+boot();
 </script>
 </body>
 </html>
