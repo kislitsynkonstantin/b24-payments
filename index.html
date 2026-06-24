@@ -97,6 +97,7 @@
   .it-title{line-height:1.4;font-weight:500;border-radius:6px;padding:1px 4px;margin-left:-4px}
   .it-title:hover{background:#eef2ff}
   .it-amount{font-weight:700;color:var(--text)}
+  .it-amount-neg{color:#d05a4a}
   .it-desc{font-weight:500}
   li.item.done .it-amount,li.item.done .it-desc{color:var(--muted);text-decoration:line-through}
   .edit-fields{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
@@ -168,13 +169,13 @@
     </div>
   </div>
 
-  <div class="badge" id="verBadge">v1.1</div>
+  <div class="badge" id="verBadge">v1.2</div>
 </div>
 
 <script>
 /* ====== Bitrix context + network layer (data lives in Supabase via `api`) ====== */
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v1.1";
+const VERSION = "v1.2";
 const ctx = { deal_id:null, user_id:null, user_name:null, checklist_id:null };
 
 /* state: same shape the prototype's render expects */
@@ -219,7 +220,8 @@ function buildState(d){
   log={};
   for(const it of (d.items||[])){
     const sec = byId[it.section_id]; if(!sec) continue;
-    const amt = fmtAmount((it.amount_plus?"+":"")+String(it.amount_raw??0));
+    const sgn = (it.amount_sign!=null ? Number(it.amount_sign) : 1) < 0 ? "-" : "";
+    const amt = fmtAmount(sgn + (it.amount_plus && !sgn ? "+" : "") + String(it.amount_raw??0));
     const o = { id:it.id, amount:amt, desc:it.description||"", done:!!it.done };
     if(it.link_group!=null){
       o.linkId=it.link_group; o.linkRole=it.link_role; o.linkTarget=Number(it.link_target)||0;
@@ -282,7 +284,7 @@ function liveFormatAmount(inp){
 function liveGroup(inp){
   const raw=inp.value; const hasPlus=/\+/.test(raw); const neg=/-|−/.test(raw);
   const dg=(raw.match(/\d/g)||[]).join("");
-  if(!dg){ inp.value = (hasPlus?"+":"") ; if(inp.value==="+"&&!/\+/.test(raw)) inp.value=""; return; }
+  if(!dg){ inp.value = neg ? "−" : (hasPlus?"+":""); return; }
   const n=parseInt(dg,10); const sign=neg?"−":(hasPlus?"+":"");
   inp.value=`${sign}${groupThousands(n)}`;
 }
@@ -327,10 +329,10 @@ async function addItem(sid){
   const d=document.getElementById("desc"+sid).value.trim();
   if(!a && !d) return;
   const s=sections.find(x=>x.id===sid); if(!s) return;
-  const plus=/\+/.test(a); const raw=Math.abs(amountNumber(a));
+  const neg=/^\s*[-−]/.test(a); const plus=!neg && /\+/.test(a); const raw=Math.abs(amountNumber(a));
   try{
-    const r = await api("add_item",{ section_id:sid, item:{ amount_raw:raw, amount_plus:plus, description:d, position:s.items.length } });
-    s.items.push({ id:r.item.id, amount:fmtAmount((plus?"+":"")+String(raw)), desc:d, done:false });
+    const r = await api("add_item",{ section_id:sid, item:{ amount_raw:raw, amount_plus:plus, amount_sign:(neg?-1:1), description:d, position:s.items.length } });
+    s.items.push({ id:r.item.id, amount:fmtAmount((neg?"-":(plus?"+":""))+String(raw)), desc:d, done:false });
     render(); fit(); pushFace();
     const amt=document.getElementById("amt"+sid); if(amt) amt.focus();
   }catch(e){ alert("Ошибка: "+e.message); }
@@ -364,6 +366,7 @@ async function splitPayment(id){
   const f=findItem(id); if(!f) return;
   const {sec,it}=f;
   if(it.linkId) return;
+  if(amountNumber(it.amount) < 0) return; // deductions can't be split
   const idx=sec.items.findIndex(i=>i.id===id);
   const target=amountNumber(it.amount), hadPlus=/\+/.test(it.amount||"");
   const lid=Date.now();                 // unique link group id
@@ -427,7 +430,7 @@ function startEdit(id){
       const changed=newAmount!==(it.amount||"");
       it.amount=newAmount; it.desc=dIn.value.trim();
       // persist
-      api("update_item",{ item_id:it.id, patch:{ amount_raw:Math.abs(amountNumber(it.amount)), amount_plus:/\+/.test(it.amount||""), description:it.desc } }).then(()=>pushFace()).catch(()=>{});
+      api("update_item",{ item_id:it.id, patch:{ amount_raw:Math.abs(amountNumber(it.amount)), amount_plus:/\+/.test(it.amount||""), amount_sign:(amountNumber(it.amount)<0?-1:1), description:it.desc } }).then(()=>pushFace()).catch(()=>{});
       if(it.linkId){
         if(it.linkRole==="primary"){ if(amountNumber(it.amount)>it.linkTarget){ it.linkTarget=amountNumber(it.amount); api("update_item",{item_id:it.id,patch:{link_target:it.linkTarget}}).catch(()=>{}); } syncPair(it.linkId); }
         else if(it.linkRole==="secondary" && changed){ breakLinkServer(it.linkId).then(()=>{ breakLink(it.linkId); render(); }); return; }
@@ -537,7 +540,7 @@ function renderItem(it,s){
       <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="3" r="1.3"/><circle cx="7.5" cy="3" r="1.3"/><circle cx="2.5" cy="8" r="1.3"/><circle cx="7.5" cy="8" r="1.3"/><circle cx="2.5" cy="13" r="1.3"/><circle cx="7.5" cy="13" r="1.3"/></svg>
     </div>
     <div class="cb ${it.done?'checked':''}" onclick="toggle(${it.id})"><svg width="13" height="13" viewBox="0 0 13 13"><path d="M2 7l3 3 6-7" stroke="#fff" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="it-body"><div class="it-title" id="t${it.id}" ondblclick="startEdit(${it.id})">${it.amount?`<span class="it-amount">${esc(it.amount)}</span> `:""}<span class="it-desc">${esc(it.desc)}</span></div>${chip}${sub}</div>
+    <div class="it-body"><div class="it-title" id="t${it.id}" ondblclick="startEdit(${it.id})">${it.amount?`<span class="it-amount${amountNumber(it.amount)<0?' it-amount-neg':''}">${esc(it.amount)}</span> `:""}<span class="it-desc">${esc(it.desc)}</span></div>${chip}${sub}</div>
     <div class="it-actions">${actions}</div>
   </li>`;
 }
