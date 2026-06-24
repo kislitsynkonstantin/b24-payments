@@ -168,13 +168,13 @@
     </div>
   </div>
 
-  <div class="badge" id="verBadge">v1.0</div>
+  <div class="badge" id="verBadge">v1.1</div>
 </div>
 
 <script>
 /* ====== Bitrix context + network layer (data lives in Supabase via `api`) ====== */
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v1.0";
+const VERSION = "v1.1";
 const ctx = { deal_id:null, user_id:null, user_name:null, checklist_id:null };
 
 /* state: same shape the prototype's render expects */
@@ -277,6 +277,14 @@ function liveFormatAmount(inp){
   const dg=(raw.match(/\d/g)||[]).join(""); if(!dg){ inp.value=""; return; }
   const n=parseInt(dg,10); const sign=neg?"−":(hasPlus?"+":"");
   inp.value=`${sign}${groupThousands(n)}\u00A0₽`;
+}
+// soft grouping while typing: spaces between thousands, NO currency sign
+function liveGroup(inp){
+  const raw=inp.value; const hasPlus=/\+/.test(raw); const neg=/-|−/.test(raw);
+  const dg=(raw.match(/\d/g)||[]).join("");
+  if(!dg){ inp.value = (hasPlus?"+":"") ; if(inp.value==="+"&&!/\+/.test(raw)) inp.value=""; return; }
+  const n=parseInt(dg,10); const sign=neg?"−":(hasPlus?"+":"");
+  inp.value=`${sign}${groupThousands(n)}`;
 }
 function esc(s){return (s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -407,8 +415,9 @@ const linkChipIcon=`<svg width="11" height="11" viewBox="0 0 16 16" fill="none" 
 function startEdit(id){
   const host=document.getElementById("t"+id); if(!host) return;
   const f=findItem(id); if(!f) return; const it=f.it;
-  host.innerHTML=`<span class="edit-fields"><input class="ed-amount" type="text" inputmode="numeric" value="${esc(it.amount? String(amountNumber(it.amount)) : "")}" placeholder="Сумма, ₽"><input class="ed-desc" type="text" value="${esc(it.desc||"")}" placeholder="Описание этапа…"></span>`;
+  host.innerHTML=`<span class="edit-fields"><input class="ed-amount" type="text" inputmode="numeric" value="${esc(it.amount? groupThousands(amountNumber(it.amount)) : "")}" placeholder="Сумма, ₽"><input class="ed-desc" type="text" value="${esc(it.desc||"")}" placeholder="Описание этапа…"></span>`;
   const aIn=host.querySelector(".ed-amount"), dIn=host.querySelector(".ed-desc");
+  aIn.addEventListener("input",()=>liveGroup(aIn));
   dIn.focus();
   let done=false;
   const finish=save=>{
@@ -491,7 +500,7 @@ function render(){
       <ul class="items grp-body" data-sid="${s.id}">${itemsHtml}</ul>
       <div class="grp-sub">${subInner}</div>
       <div class="grp-add">
-        <input id="amt${s.id}" class="amount-in" type="text" inputmode="numeric" placeholder="Сумма, ₽" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('desc${s.id}').focus();}">
+        <input id="amt${s.id}" class="amount-in" type="text" inputmode="numeric" placeholder="Сумма, ₽" oninput="liveGroup(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('desc${s.id}').focus();}">
         <input id="desc${s.id}" class="desc-in" type="text" placeholder="Описание этапа…" onkeydown="if(event.key==='Enter')addItem(${s.id})">
         <button onclick="addItem(${s.id})">Добавить</button>
       </div>
