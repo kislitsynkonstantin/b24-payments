@@ -174,13 +174,13 @@
     </div>
   </div>
 
-  <div class="badge" id="verBadge">v0.7</div>
+  <div class="badge" id="verBadge">v0.8</div>
 </div>
 
 <script>
 /* ====== Bitrix context + network layer (data lives in Supabase via `api`) ====== */
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.7";
+const VERSION = "v0.8";
 const ctx = { deal_id:null, user_id:null, user_name:null, checklist_id:null };
 
 /* state: same shape the prototype's render expects */
@@ -252,7 +252,8 @@ function pushFace(){
   let paid=0,total=0;
   for(const s of sections) for(const i of s.items){ const a=amountNumber(i.amount); total+=a; if(i.done) paid+=a; }
   const rub=n=>groupThousands(n)+"р";
-  const kan = total>0 ? (rub(paid)+" / "+rub(total)) : "";
+  const rest=Math.max(0,total-paid);
+  const kan = total>0 ? (rub(rest)+" | "+rub(total)) : "";
   try{ BX24.callMethod("crm.deal.update",{ id:Number(ctx.deal_id),
     fields:{ UF_CRM_PAY_SUMMARY: paid+"|"+total, UF_CRM_PAY_KANBAN: kan } }, function(){}); }catch(_){}
 }
