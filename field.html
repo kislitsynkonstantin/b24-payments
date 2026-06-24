@@ -118,7 +118,8 @@ async function load(){
     const d = await r.json();
     let paid=0,total=0; const rest=[];
     for(const it of (d.items||[])){
-      const a=Number(it.amount_raw)||0; total+=a;
+      const sign=(it.amount_sign!=null?Number(it.amount_sign):1)<0?-1:1;
+      const a=(Number(it.amount_raw)||0)*sign; total+=a;
       if(it.done){ paid+=a; }
       else { rest.push({ desc: it.description, amount: a }); }
     }
