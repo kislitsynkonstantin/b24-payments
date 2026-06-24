@@ -63,12 +63,12 @@
   <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h4"/></svg>Этапы оплат</h1>
   <div id="err" class="err" style="display:none"></div>
   <div id="root"><div class="state">Загрузка…</div></div>
-  <div class="ver" id="ver">v0.4-mvp</div>
+  <div class="ver" id="ver">v0.5-mvp</div>
 </div>
 
 <script>
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.4-mvp";
+const VERSION = "v0.5-mvp";
 
 // SVG icon set (no emoji anywhere)
 const ICON = {
@@ -110,6 +110,22 @@ function totals(){
   let paid=0,total=0;
   for(const it of model.items){ const a=Number(it.amount_raw)||0; total+=a; if(it.done) paid+=a; }
   return { paid,total, pct: total? Math.round(paid/total*100):0 };
+}
+
+// Write summary into the deal so the left-column field and kanban tile update immediately.
+function pushFace(){
+  if(!window.BX24 || !ctx.deal_id) return;
+  const t = totals();
+  const kanban = t.total>0 ? (t.pct+"% оплачено") : "";
+  try{
+    BX24.callMethod("crm.deal.update", {
+      id: Number(ctx.deal_id),
+      fields: {
+        UF_CRM_PAY_SUMMARY: t.paid + "|" + t.total,
+        UF_CRM_PAY_KANBAN: kanban
+      }
+    }, function(){});
+  }catch(_){}
 }
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -206,6 +222,7 @@ async function reload(){
   model = data;
   render();
   fit();
+  pushFace();
 }
 
 function boot(){
