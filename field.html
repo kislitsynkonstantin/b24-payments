@@ -29,6 +29,12 @@
   .pct.done{color:var(--green)}
   .empty{color:var(--muted);font-size:12px;padding:4px 0}
   a.open{font-size:11px;color:var(--blue);text-decoration:none}
+  .rest-h{margin-top:10px;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .rest{margin-top:5px;display:flex;flex-direction:column;gap:4px}
+  .rest-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12.5px;line-height:1.3}
+  .rest-row .d{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rest-row .a{flex:0 0 auto;font-weight:700;color:var(--blue)}
+  .rest-all{margin-top:8px;font-size:12px;color:var(--green);font-weight:600}
 </style>
 </head>
 <body>
@@ -50,7 +56,7 @@ function fit(){
   }catch(_){}
 }
 
-function paint(paid,total){
+function paint(paid,total,rest){
   const pct = total? Math.round(paid/total*100):0;
   const done = total>0 && paid>=total;
   const box = document.getElementById("box");
@@ -58,15 +64,26 @@ function paint(paid,total){
     box.innerHTML = '<div class="empty">Этапы оплат не заданы</div>';
     fit(); return;
   }
+  let restHtml = '';
+  if(done){
+    restHtml = '<div class="rest-all">'+ICON.check.replace('width="18" height="18"','')+' Все этапы оплачены</div>';
+  } else if(rest && rest.length){
+    const rows = rest.map(function(it){
+      return '<div class="rest-row"><span class="d">'+esc(it.desc||'Без названия')+'</span><span class="a">'+fmt(it.amount)+'</span></div>';
+    }).join('');
+    restHtml = '<div class="rest-h">Осталось оплатить</div><div class="rest">'+rows+'</div>';
+  }
   box.innerHTML =
     '<div class="top">'+
       '<span class="sum '+(done?'done':'')+'">'+(done?ICON.check:ICON.wallet)+' '+fmt(done?total:paid)+'</span>'+
       '<span class="of">'+(done?'оплачено полностью':'из '+fmt(total))+'</span>'+
     '</div>'+
     '<div class="bar '+(done?'done':'')+'"><i style="width:'+pct+'%"></i></div>'+
-    '<div class="meta"><span class="lbl">Оплачено</span><span class="pct '+(done?'done':'')+'">'+pct+'%</span></div>';
+    '<div class="meta"><span class="lbl">Оплачено</span><span class="pct '+(done?'done':'')+'">'+pct+'%</span></div>'+
+    restHtml;
   fit();
 }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
 async function load(){
   if(!dealId){ paint(0,0); return; }
@@ -74,9 +91,13 @@ async function load(){
     const r = await fetch(API,{method:"POST",headers:{"content-type":"application/json"},
       body:JSON.stringify({action:"load",deal_id:dealId,user_id:null,user_name:null})});
     const d = await r.json();
-    let paid=0,total=0;
-    for(const it of (d.items||[])){ const a=Number(it.amount_raw)||0; total+=a; if(it.done) paid+=a; }
-    paint(paid,total);
+    let paid=0,total=0; const rest=[];
+    for(const it of (d.items||[])){
+      const a=Number(it.amount_raw)||0; total+=a;
+      if(it.done){ paid+=a; }
+      else { rest.push({ desc: it.description, amount: a }); }
+    }
+    paint(paid,total,rest);
   }catch(e){
     document.getElementById("box").innerHTML='<div class="empty">—</div>'; fit();
   }
@@ -95,7 +116,7 @@ if(window.BX24){
   });
 } else {
   // standalone preview
-  paint(2295000,2395000);
+  paint(2295000,2395000,[{desc:"Финальный платёж",amount:100000}]);
 }
 </script>
 </body>
