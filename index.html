@@ -174,13 +174,13 @@
     </div>
   </div>
 
-  <div class="badge" id="verBadge">v0.8</div>
+  <div class="badge" id="verBadge">v0.9</div>
 </div>
 
 <script>
 /* ====== Bitrix context + network layer (data lives in Supabase via `api`) ====== */
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.8";
+const VERSION = "v0.9";
 const ctx = { deal_id:null, user_id:null, user_name:null, checklist_id:null };
 
 /* state: same shape the prototype's render expects */
@@ -413,9 +413,8 @@ const linkChipIcon=`<svg width="11" height="11" viewBox="0 0 16 16" fill="none" 
 function startEdit(id){
   const host=document.getElementById("t"+id); if(!host) return;
   const f=findItem(id); if(!f) return; const it=f.it;
-  host.innerHTML=`<span class="edit-fields"><input class="ed-amount" type="text" value="${esc(it.amount||"")}" placeholder="Сумма, ₽"><input class="ed-desc" type="text" value="${esc(it.desc||"")}" placeholder="Описание этапа…"></span>`;
+  host.innerHTML=`<span class="edit-fields"><input class="ed-amount" type="text" inputmode="numeric" value="${esc(it.amount? String(amountNumber(it.amount)) : "")}" placeholder="Сумма, ₽"><input class="ed-desc" type="text" value="${esc(it.desc||"")}" placeholder="Описание этапа…"></span>`;
   const aIn=host.querySelector(".ed-amount"), dIn=host.querySelector(".ed-desc");
-  aIn.addEventListener("input",()=>liveFormatAmount(aIn));
   dIn.focus();
   let done=false;
   const finish=save=>{
@@ -498,7 +497,7 @@ function render(){
       <ul class="items grp-body" data-sid="${s.id}">${itemsHtml}</ul>
       <div class="grp-sub">${subInner}</div>
       <div class="grp-add">
-        <input id="amt${s.id}" class="amount-in" type="text" placeholder="Сумма, ₽" oninput="liveFormatAmount(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('desc${s.id}').focus();}">
+        <input id="amt${s.id}" class="amount-in" type="text" inputmode="numeric" placeholder="Сумма, ₽" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('desc${s.id}').focus();}">
         <input id="desc${s.id}" class="desc-in" type="text" placeholder="Описание этапа…" onkeydown="if(event.key==='Enter')addItem(${s.id})">
         <button onclick="addItem(${s.id})">Добавить</button>
       </div>
