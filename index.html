@@ -63,12 +63,12 @@
   <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h4"/></svg>Этапы оплат</h1>
   <div id="err" class="err" style="display:none"></div>
   <div id="root"><div class="state">Загрузка…</div></div>
-  <div class="ver" id="ver">v0.5-mvp</div>
+  <div class="ver" id="ver">v0.6-mvp</div>
 </div>
 
 <script>
 const API = "https://cadncmmtvjvpevqhaost.supabase.co/functions/v1/api";
-const VERSION = "v0.5-mvp";
+const VERSION = "v0.6-mvp";
 
 // SVG icon set (no emoji anywhere)
 const ICON = {
@@ -116,7 +116,8 @@ function totals(){
 function pushFace(){
   if(!window.BX24 || !ctx.deal_id) return;
   const t = totals();
-  const kanban = t.total>0 ? (t.pct+"% оплачено") : "";
+  const rub = n => new Intl.NumberFormat("ru-RU").format(Number(n)||0) + "р";
+  const kanban = t.total>0 ? (rub(t.paid)+" / "+rub(t.total)) : "";
   try{
     BX24.callMethod("crm.deal.update", {
       id: Number(ctx.deal_id),
